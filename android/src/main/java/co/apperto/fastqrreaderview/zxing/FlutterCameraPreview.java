@@ -67,6 +67,8 @@ import co.apperto.fastqrreaderview.R;
  * 7. set surface and start preview
  */
 public class FlutterCameraPreview extends ViewGroup {
+    private SurfaceTexture surfaceTexture;
+
     public interface StateListener {
         /**
          * Preview and frame sizes are determined.
@@ -242,7 +244,7 @@ public class FlutterCameraPreview extends ViewGroup {
     }
 
     private void initialize(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes, SurfaceTexture texture) {
-        textureView.setSurfaceTexture(texture);
+        surfaceTexture = texture;
 
         if (getBackground() == null) {
             // Default to SurfaceView colour, so that there are less changes.
@@ -306,18 +308,11 @@ public class FlutterCameraPreview extends ViewGroup {
     @SuppressWarnings("deprecation")
     @SuppressLint("NewAPI")
     private void setupSurfaceView() {
-        if(useTextureView && Build.VERSION.SDK_INT >= 14) {
-            //textureView = new TextureView(getContext());
-            textureView.setSurfaceTextureListener(surfaceTextureListener());
-            addView(textureView);
-        } else {
-            //surfaceView = new SurfaceView(getContext());
-            if (Build.VERSION.SDK_INT < 11) {
-                surfaceView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-            }
-            surfaceView.getHolder().addCallback(surfaceCallback);
-            addView(surfaceView);
-        }
+        Log.w("TEXTURE", "We are setting the textures");
+        textureView = new TextureView(getContext());
+        textureView.setSurfaceTexture(surfaceTexture);
+        textureView.setSurfaceTextureListener(surfaceTextureListener());
+        addView(textureView);
     }
 
     /**

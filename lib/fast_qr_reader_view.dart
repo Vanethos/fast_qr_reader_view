@@ -99,7 +99,7 @@ Future<List<CameraDescription>> availableCameras() async {
 }
 
 /// Checks the current status of the Camera Permission
-/// 
+///
 /// returns: [Future<PermissionStatus>] with the status from the check
 Future<PermissionStatus> checkCameraPermission() async {
   try {
@@ -110,59 +110,59 @@ Future<PermissionStatus> checkCameraPermission() async {
   } on PlatformException catch (e) {
     print("Error while permissions");
     return Future.value(PermissionStatus.unknown);
-  } 
+  }
 }
 
 /// Requests the camera permission
-/// 
+///
 /// returns: [Future<PermissionStatus>] with the status from the request
 Future<PermissionStatus> requestCameraPermission() async {
   try {
-      var result =  await _channel.invokeMethod('requestPermission');
-      switch(result) {
-        case "denied":
-          return PermissionStatus.denied;
-        case "dismissedForever":
-          return PermissionStatus.dismissedForever;
-        case "granted":
-          return PermissionStatus.granted;
-        default:
-          return PermissionStatus.unknown;
-      }
-    } on PlatformException catch (e) {
-      return Future.value(PermissionStatus.unknown);
+    var result = await _channel.invokeMethod('requestPermission');
+    switch (result) {
+      case "denied":
+        return PermissionStatus.denied;
+      case "dismissedForever":
+        return PermissionStatus.dismissedForever;
+      case "granted":
+        return PermissionStatus.granted;
+      default:
+        return PermissionStatus.unknown;
     }
+  } on PlatformException catch (e) {
+    return Future.value(PermissionStatus.unknown);
+  }
 }
 
 /// Gets the PermissionStatus from the channel Method
-/// 
+///
 /// Given a [String] status from the method channel, it returns a
 /// [PermissionStatus]
 PermissionStatus _getPermissionStatus(String status) {
-  switch(status) {
-        case "denied":
-          return PermissionStatus.denied;
-        case "dismissedForever":
-          return PermissionStatus.dismissedForever;
-        case "granted":
-          return PermissionStatus.granted;
-        case "restricted":
-          return PermissionStatus.restricted;
-        default:
-          return PermissionStatus.unknown;
-      }
+  switch (status) {
+    case "denied":
+      return PermissionStatus.denied;
+    case "dismissedForever":
+      return PermissionStatus.dismissedForever;
+    case "granted":
+      return PermissionStatus.granted;
+    case "restricted":
+      return PermissionStatus.restricted;
+    default:
+      return PermissionStatus.unknown;
+  }
 }
 
 /// Opens the native settings screen
-/// 
+///
 /// Opens the native iOS or Android settings screens for the current app,
 /// So that the user can give the app permission even if he has denied them
 Future<void> openSettings() {
   try {
-      return _channel.invokeMethod('settings');
-    } on PlatformException catch (e) {
-      return Future.error(e);
-    }
+    return _channel.invokeMethod('settings');
+  } on PlatformException catch (e) {
+    return Future.error(e);
+  }
 }
 
 /// Enum to give us the status of the Permission request/check
@@ -228,6 +228,12 @@ class QRReaderPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller.value.isInitialized) {
+      print(
+          "[][][]This is initialized and the texture id is ${controller._textureId}");
+    } else {
+      print("[][][]NOTHING IS INITIALIZED!!!");
+    }
     return controller.value.isInitialized
         ? new Texture(textureId: controller._textureId)
         : new Container();
@@ -356,6 +362,7 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
   ///
   /// A "cameraClosing" event is sent when the camera is closed automatically by the system (for example when the app go to background). The plugin will try to reopen the camera automatically but any ongoing recording will end.
   void _listener(dynamic event) {
+    print("_listener Event!!!!");
     final Map<dynamic, dynamic> map = event;
     if (_isDisposed) {
       return;
@@ -451,6 +458,10 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
           onCodeRead(call.arguments);
           value = value.copyWith(isScanning: false);
         }
+        break;
+      case "print":
+        print(call.arguments);
+        break;
     }
   }
 }

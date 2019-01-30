@@ -88,8 +88,8 @@ public class FlutterBarcodeView extends FlutterCameraPreview {
     }
 
     private void initialize() {
-        decoderFactory = new DefaultDecoderFactory();
-        resultHandler = new Handler(resultCallback);
+        //decoderFactory = new DefaultDecoderFactory();
+        //resultHandler = new Handler(resultCallback);
     }
 
     /**
