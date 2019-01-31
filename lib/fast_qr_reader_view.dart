@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -221,22 +222,39 @@ class QRReaderException implements Exception {
 }
 
 // Build the UI texture view of the video data with textureId.
-class QRReaderPreview extends StatelessWidget {
+class QRReaderPreview extends StatefulWidget {
   final QRReaderController controller;
 
   const QRReaderPreview(this.controller);
 
   @override
+  QRReaderPreviewState createState() {
+    return new QRReaderPreviewState();
+  }
+}
+
+class QRReaderPreviewState extends State<QRReaderPreview> {
+  @override
   Widget build(BuildContext context) {
-    if (controller.value.isInitialized) {
-      print(
-          "[][][]This is initialized and the texture id is ${controller._textureId}");
+    print("Building the view...?");
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      print("Creating Android View");
+      return AndroidView(
+        viewType: 'fast_qr_reader_view',
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      if (widget.controller.value.isInitialized) {
+        print(
+            "[][][]This is initialized and the texture id is ${widget.controller._textureId}");
+      } else {
+        print("[][][]NOTHING IS INITIALIZED!!!");
+      }
+      return widget.controller.value.isInitialized
+          ? new Texture(textureId: widget.controller._textureId)
+          : new Container();
     } else {
-      print("[][][]NOTHING IS INITIALIZED!!!");
+      return Container();
     }
-    return controller.value.isInitialized
-        ? new Texture(textureId: controller._textureId)
-        : new Container();
   }
 }
 
