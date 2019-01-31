@@ -382,6 +382,7 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
   ///
   /// Throws a [QRReaderException] if the capture fails.
   Future<Null> startScanning() async {
+    print("startScanning Event!!!!");
     if (!value.isInitialized || _isDisposed) {
       throw new QRReaderException(
         'Uninitialized QRReaderController',

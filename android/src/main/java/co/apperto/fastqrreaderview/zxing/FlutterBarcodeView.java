@@ -5,6 +5,7 @@ import android.graphics.SurfaceTexture;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceView;
 
 import com.google.zxing.DecodeHintType;
@@ -88,8 +89,8 @@ public class FlutterBarcodeView extends FlutterCameraPreview {
     }
 
     private void initialize() {
-        //decoderFactory = new DefaultDecoderFactory();
-        //resultHandler = new Handler(resultCallback);
+        decoderFactory = new DefaultDecoderFactory();
+        resultHandler = new Handler(resultCallback);
     }
 
     /**
@@ -150,6 +151,7 @@ public class FlutterBarcodeView extends FlutterCameraPreview {
      * @param callback called with the barcode result, as well as possible ResultPoints
      */
     public void decodeContinuous(BarcodeCallback callback) {
+        Log.d("FlutterBarcodeView", "decodeContinuous");
         this.decodeMode = DecodeMode.CONTINUOUS;
         this.callback = callback;
         startDecoderThread();
@@ -170,8 +172,12 @@ public class FlutterBarcodeView extends FlutterCameraPreview {
 
     private void startDecoderThread() {
         stopDecoderThread(); // To be safe
+        Log.d("FlutterBarcodeView", "startDecoderThread");
+
 
         if (decodeMode != DecodeMode.NONE && isPreviewActive()) {
+            Log.d("FlutterBarcodeView", "decodeMode != DecodeMode.NONE && isPreviewActive()");
+            Log.d("FlutterBarcodeView", "Handler null?" + ((resultHandler == null) ? "YES" : "NO"));
             // We only start the thread if both:
             // 1. decoding was requested
             // 2. the preview is active

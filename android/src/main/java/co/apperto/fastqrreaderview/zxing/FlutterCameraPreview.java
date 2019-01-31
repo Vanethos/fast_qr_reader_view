@@ -9,6 +9,7 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Camera;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
@@ -26,6 +27,7 @@ import android.view.TextureView;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
+import com.journeyapps.barcodescanner.BarcodeView;
 import com.journeyapps.barcodescanner.RotationCallback;
 import com.journeyapps.barcodescanner.RotationListener;
 import com.journeyapps.barcodescanner.Size;
@@ -39,6 +41,7 @@ import com.journeyapps.barcodescanner.camera.FitCenterStrategy;
 import com.journeyapps.barcodescanner.camera.FitXYStrategy;
 import com.journeyapps.barcodescanner.camera.PreviewScalingStrategy;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -245,10 +248,11 @@ public class FlutterCameraPreview extends ViewGroup {
 
     private void initialize(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes, SurfaceTexture texture) {
         surfaceTexture = texture;
+        setupSurfaceView();
 
         if (getBackground() == null) {
             // Default to SurfaceView colour, so that there are less changes.
-            setBackgroundColor(Color.BLACK);
+            setBackgroundColor(Color.RED);
         }
 
         initializeAttributes(attrs);
@@ -260,12 +264,6 @@ public class FlutterCameraPreview extends ViewGroup {
         rotationListener = new RotationListener();
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-
-        setupSurfaceView();
-    }
 
     /**
      * Initialize from XML attributes.
@@ -308,9 +306,8 @@ public class FlutterCameraPreview extends ViewGroup {
     @SuppressWarnings("deprecation")
     @SuppressLint("NewAPI")
     private void setupSurfaceView() {
-        Log.w("TEXTURE", "We are setting the textures");
+        Log.d(TAG, "We are setting the textures");
         textureView = new TextureView(getContext());
-        textureView.setSurfaceTexture(surfaceTexture);
         textureView.setSurfaceTextureListener(surfaceTextureListener());
         addView(textureView);
     }
@@ -504,20 +501,13 @@ public class FlutterCameraPreview extends ViewGroup {
     }
 
     private void startPreviewIfReady() {
-        if (currentSurfaceSize != null && previewSize != null && surfaceRect != null) {
-            if (surfaceView != null && currentSurfaceSize.equals(new Size(surfaceRect.width(), surfaceRect.height()))) {
-                startCameraPreview(new CameraSurface(surfaceView.getHolder()));
-            } else if(textureView != null && Build.VERSION.SDK_INT >= 14 && textureView.getSurfaceTexture() != null) {
-                if(previewSize != null) {
-                    Matrix transform = calculateTextureTransform(new Size(textureView.getWidth(), textureView.getHeight()), previewSize);
-                    textureView.setTransform(transform);
-                }
-
-                startCameraPreview(new CameraSurface(textureView.getSurfaceTexture()));
-            } else {
-                // Surface is not the correct size yet
-            }
+        Log.d(TAG, "startPreviewIfReady");
+        if(previewSize != null) {
+            Log.d(TAG, "Inside startPreviewIfReady");
+            Matrix transform = calculateTextureTransform(new Size(textureView.getWidth(), textureView.getHeight()), previewSize);
+            textureView.setTransform(transform);
         }
+        startCameraPreview(new CameraSurface(surfaceTexture));
     }
 
     @SuppressLint("DrawAllocation")
@@ -592,8 +582,11 @@ public class FlutterCameraPreview extends ViewGroup {
         Util.validateMainThread();
         Log.d(TAG, "resume()");
 
+        Log.d(TAG, "Is textureview null? " + ((textureView == null) ? "YES" : "NO"));
         // initCamera() does nothing if called twice, but does log a warning
         initCamera();
+
+        Log.d(TAG, "Is textureview null? " + ((textureView == null) ? "YES" : "NO"));
 
         if (currentSurfaceSize != null) {
             // The activity was paused but not stopped, so the surface still exists. Therefore
@@ -603,6 +596,7 @@ public class FlutterCameraPreview extends ViewGroup {
             // Install the callback and wait for surfaceCreated() to init the camera.
             surfaceView.getHolder().addCallback(surfaceCallback);
         } else if(textureView != null && Build.VERSION.SDK_INT >= 14) {
+            Log.d(TAG, "        } else if(textureView != null && Build.VERSION.SDK_INT >= 14) {");
             if(textureView.isAvailable()) {
                 surfaceTextureListener().onSurfaceTextureAvailable(textureView.getSurfaceTexture(), textureView.getWidth(), textureView.getHeight());
             } else {
@@ -613,6 +607,8 @@ public class FlutterCameraPreview extends ViewGroup {
         // To trigger surfaceSized again
         requestLayout();
         rotationListener.listen(getContext(), rotationCallback);
+        Log.d(TAG, "Trying to set the camera surface texture");
+        startPreviewIfReady();
     }
 
     /**
@@ -735,14 +731,18 @@ public class FlutterCameraPreview extends ViewGroup {
             Log.w(TAG, "initCamera called twice");
             return;
         }
-
+        Log.w(TAG, "Step 1");
         cameraInstance = createCameraInstance();
-
+        Log.w(TAG, "Step 2");
         cameraInstance.setReadyHandler(stateHandler);
+        Log.w(TAG, "Step 3");
+        cameraInstance.setSurface(new CameraSurface(surfaceTexture));
+        Log.w(TAG, "Step 4");
         cameraInstance.open();
-
+        Log.w(TAG, "Step 5");
         // Keep track of the orientation we opened at, so that we don't reopen the camera if we
         // don't need to.
+        Log.w(TAG, "Step 6");
         openedOrientation = getDisplayRotation();
     }
 
@@ -754,12 +754,18 @@ public class FlutterCameraPreview extends ViewGroup {
      * @return a new CameraInstance
      */
     protected CameraInstance createCameraInstance() {
+        Log.w(TAG, "createCameraInstance Step 1");
         CameraInstance cameraInstance = new CameraInstance(getContext());
+        Log.w(TAG, "createCameraInstance Step 2");
         cameraInstance.setCameraSettings(cameraSettings);
+        Log.w(TAG, "createCameraInstance Step 3");
+        //cameraInstance.setSurface(new CameraSurface(textureView.getSurfaceTexture()));
+        Log.w(TAG, "createCameraInstance Step 4");
         return cameraInstance;
     }
 
     private void startCameraPreview(CameraSurface surface) {
+        Log.i(TAG, "startCameraPreview");
         if (!previewActive && cameraInstance != null) {
             Log.i(TAG, "Starting preview");
             cameraInstance.setSurface(surface);

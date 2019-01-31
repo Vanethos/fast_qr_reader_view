@@ -39,6 +39,7 @@ import co.apperto.fastqrreaderview.common.CameraSource;
 import co.apperto.fastqrreaderview.common.CameraSourcePreview;
 import co.apperto.fastqrreaderview.java.barcodescanning.BarcodeScanningProcessor;
 import co.apperto.fastqrreaderview.zxing.FlutterBarcodeView;
+import co.apperto.fastqrreaderview.zxing.FlutterCameraSource;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -118,8 +119,8 @@ public class FastQrReaderViewPlugin implements MethodCallHandler, PluginRegistry
                     public void onActivityPaused(Activity activity) {
                         if (activity == FastQrReaderViewPlugin.this.activity) {
                             if (camera != null) {
-                                if (camera.preview != null) {
-                                    camera.preview.stop();
+                                if (camera.barcodeView != null) {
+                                    camera.barcodeView.pause();
 
                                 }
                             }
@@ -130,8 +131,8 @@ public class FastQrReaderViewPlugin implements MethodCallHandler, PluginRegistry
                     public void onActivityStopped(Activity activity) {
                         if (activity == FastQrReaderViewPlugin.this.activity) {
                             if (camera != null) {
-                                if (camera.preview != null) {
-                                    camera.preview.stop();
+                                if (camera.barcodeView != null) {
+                                    camera.barcodeView.pause();
                                 }
 
                                 if (camera.cameraSource != null) {
@@ -347,8 +348,7 @@ public class FastQrReaderViewPlugin implements MethodCallHandler, PluginRegistry
 
         private static final int PERMISSION_REQUESTS = 1;
 
-        private CameraSource cameraSource = null;
-        private CameraSourcePreview preview;
+        private FlutterCameraSource cameraSource = null;
 
         private final FlutterView.SurfaceTextureEntry textureEntry;
 
@@ -399,6 +399,8 @@ public class FastQrReaderViewPlugin implements MethodCallHandler, PluginRegistry
                     reqFormats.add(map.get(f));
                 }
             }
+
+            cameraSource = new FlutterCameraSource(activity);
 
             textureEntry = view.createSurfaceTexture();
 
@@ -513,6 +515,9 @@ public class FastQrReaderViewPlugin implements MethodCallHandler, PluginRegistry
                 barcodeView.stopDecoding();
             }
 
+            if (cameraSource != null) {
+                cameraSource.release();
+            }
         }
 
         private void dispose() {
@@ -520,6 +525,10 @@ public class FastQrReaderViewPlugin implements MethodCallHandler, PluginRegistry
             if (barcodeView != null) {
                 barcodeView.pause();
                 barcodeView = null;
+            }
+
+            if (cameraSource != null) {
+                cameraSource.release();
             }
         }
     }
