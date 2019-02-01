@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-final MethodChannel _channelInit = const MethodChannel('fast_qr_reader_view/init')
-  ..invokeMethod('init');
+final MethodChannel _channelInit =
+    const MethodChannel('fast_qr_reader_view/init')..invokeMethod('init');
 
 final MethodChannel _channel = const MethodChannel('fast_qr_reader_view')
   ..invokeMethod('init');
@@ -92,7 +92,9 @@ Future<List<CameraDescription>> availableCameras() async {
   try {
     print("inside try");
     final List<dynamic> cameras =
-        await _channelInit.invokeMethod('availableCameras');
+        (defaultTargetPlatform == TargetPlatform.android)
+            ? await _channelInit.invokeMethod('availableCameras')
+            : await _channel.invokeMethod('availableCameras');
     print("after await");
     return cameras.map((dynamic camera) {
       return new CameraDescription(
@@ -112,7 +114,9 @@ Future<List<CameraDescription>> availableCameras() async {
 Future<PermissionStatus> checkCameraPermission() async {
   try {
     print("checkCameraPermission()");
-    var permission = await _channelInit.invokeMethod('checkPermission') as String;
+    var permission = (defaultTargetPlatform == TargetPlatform.android)
+        ? await _channelInit.invokeMethod('checkPermission') as String
+        : await _channel.invokeMethod('checkPermission') as String;
     print("Permission: $permission");
     return _getPermissionStatus(permission);
   } on PlatformException catch (e) {
@@ -127,7 +131,9 @@ Future<PermissionStatus> checkCameraPermission() async {
 Future<PermissionStatus> requestCameraPermission() async {
   try {
     print("invoking requestPermission");
-    var result = await _channelInit.invokeMethod('requestPermission');
+    var result = (defaultTargetPlatform == TargetPlatform.android)
+        ? await _channelInit.invokeMethod('requestPermission')
+        : await _channel.invokeMethod('requestPermission');
     print("result requestCameraPermission");
     switch (result) {
       case "denied":
@@ -170,7 +176,9 @@ PermissionStatus _getPermissionStatus(String status) {
 /// So that the user can give the app permission even if he has denied them
 Future<void> openSettings() {
   try {
-    return _channelInit.invokeMethod('settings');
+    return (defaultTargetPlatform == TargetPlatform.android)
+        ? _channelInit.invokeMethod('settings')
+        : _channel.invokeMethod('settings');
   } on PlatformException catch (e) {
     print("Error");
     return Future.error(e);
