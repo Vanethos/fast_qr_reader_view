@@ -4,6 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+final MethodChannel _channelInit = const MethodChannel('fast_qr_reader_view/init')
+  ..invokeMethod('init');
+
 final MethodChannel _channel = const MethodChannel('fast_qr_reader_view')
   ..invokeMethod('init');
 
@@ -85,9 +88,12 @@ CameraLensDirection _parseCameraLensDirection(String string) {
 ///
 /// May throw a [QRReaderException].
 Future<List<CameraDescription>> availableCameras() async {
+  print("availableCameras()");
   try {
+    print("inside try");
     final List<dynamic> cameras =
-        await _channel.invokeMethod('availableCameras');
+        await _channelInit.invokeMethod('availableCameras');
+    print("after await");
     return cameras.map((dynamic camera) {
       return new CameraDescription(
         name: camera['name'],
@@ -95,6 +101,7 @@ Future<List<CameraDescription>> availableCameras() async {
       );
     }).toList();
   } on PlatformException catch (e) {
+    print("Error");
     throw new QRReaderException(e.code, e.message);
   }
 }
@@ -105,7 +112,7 @@ Future<List<CameraDescription>> availableCameras() async {
 Future<PermissionStatus> checkCameraPermission() async {
   try {
     print("checkCameraPermission()");
-    var permission = await _channel.invokeMethod('checkPermission') as String;
+    var permission = await _channelInit.invokeMethod('checkPermission') as String;
     print("Permission: $permission");
     return _getPermissionStatus(permission);
   } on PlatformException catch (e) {
@@ -119,7 +126,9 @@ Future<PermissionStatus> checkCameraPermission() async {
 /// returns: [Future<PermissionStatus>] with the status from the request
 Future<PermissionStatus> requestCameraPermission() async {
   try {
-    var result = await _channel.invokeMethod('requestPermission');
+    print("invoking requestPermission");
+    var result = await _channelInit.invokeMethod('requestPermission');
+    print("result requestCameraPermission");
     switch (result) {
       case "denied":
         return PermissionStatus.denied;
@@ -131,6 +140,7 @@ Future<PermissionStatus> requestCameraPermission() async {
         return PermissionStatus.unknown;
     }
   } on PlatformException catch (e) {
+    print("Error");
     return Future.value(PermissionStatus.unknown);
   }
 }
@@ -160,8 +170,9 @@ PermissionStatus _getPermissionStatus(String status) {
 /// So that the user can give the app permission even if he has denied them
 Future<void> openSettings() {
   try {
-    return _channel.invokeMethod('settings');
+    return _channelInit.invokeMethod('settings');
   } on PlatformException catch (e) {
+    print("Error");
     return Future.error(e);
   }
 }
@@ -366,6 +377,7 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
         ),
       );
     } on PlatformException catch (e) {
+      print("Error");
       throw new QRReaderException(e.code, e.message);
     }
     _eventSubscription =
@@ -414,12 +426,14 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
       );
     }
     try {
+      print("Inside start scanning");
       value = value.copyWith(isScanning: true);
       await _channel.invokeMethod(
         'startScanning',
         <String, dynamic>{'textureId': _textureId},
       );
     } on PlatformException catch (e) {
+      print("Error");
       throw new QRReaderException(e.code, e.message);
     }
   }
@@ -445,6 +459,7 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
         <String, dynamic>{'textureId': _textureId},
       );
     } on PlatformException catch (e) {
+      print("Error");
       throw new QRReaderException(e.code, e.message);
     }
   }

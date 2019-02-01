@@ -309,6 +309,10 @@ public class FastQrReaderView implements MethodCallHandler, PlatformView {
                 result.error("cameraPermission", "Camera permission not granted", null);
         } else {
 
+            if (barcodeView == null) {
+                barcodeView = new BarcodeView(context);
+            }
+
             barcodeView.decodeContinuous(new BarcodeCallback() {
                 @Override
                 public void barcodeResult(BarcodeResult result) {

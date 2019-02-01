@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,11 +35,13 @@ public class FastQrReaderViewPlugin implements MethodChannel.MethodCallHandler, 
     private static MethodChannel channel;
     private CameraManager cameraManager;
 
+    private static final String TAG = FastQrReaderViewPlugin.class.getSimpleName();
+
 
     public FastQrReaderViewPlugin(PluginRegistry.Registrar registrar) {
         this.registrar = registrar;
         this.cameraManager = (CameraManager) registrar.activity().getSystemService(Context.CAMERA_SERVICE);
-
+        registrar.addRequestPermissionsResultListener(this);
     }
 
     public static void registerWith(PluginRegistry.Registrar registrar) {
@@ -47,7 +50,7 @@ public class FastQrReaderViewPlugin implements MethodChannel.MethodCallHandler, 
                 .platformViewRegistry()
                 .registerViewFactory("fast_qr_reader_view", new FastQrReaderViewFactory(registrar));
 
-        channel = new MethodChannel(registrar.messenger(), "fast_qr_reader_view");
+        channel = new MethodChannel(registrar.messenger(), "fast_qr_reader_view/init");
         channel.setMethodCallHandler(new FastQrReaderViewPlugin(registrar));
     }
 
@@ -79,6 +82,8 @@ public class FastQrReaderViewPlugin implements MethodChannel.MethodCallHandler, 
                 result.success(null);
                 break;
             case "availableCameras":
+                Log.d(TAG, "=== Inside plugin availableCameras");
+                channel.invokeMethod("updateCode", "=== Inside plugin availableCameras");
                 try {
                     String[] cameraNames = cameraManager.getCameraIdList();
                     List<Map<String, Object>> cameras = new ArrayList<>();
@@ -108,6 +113,9 @@ public class FastQrReaderViewPlugin implements MethodChannel.MethodCallHandler, 
                 } catch (CameraAccessException e) {
                     result.error("cameraAccess", e.getMessage(), null);
                 }
+                break;
+            default:
+                result.notImplemented();
                 break;
         }
     }
