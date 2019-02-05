@@ -204,7 +204,6 @@ public class FastQrReaderView implements MethodCallHandler, PlatformView {
     public void dispose() {
         if (barcodeView != null) {
             barcodeView.pause();
-            barcodeView = null;
         }
     }
 
