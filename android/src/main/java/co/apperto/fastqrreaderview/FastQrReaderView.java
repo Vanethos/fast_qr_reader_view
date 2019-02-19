@@ -315,9 +315,11 @@ public class FastQrReaderView implements MethodCallHandler, PlatformView {
             barcodeView.decodeContinuous(new BarcodeCallback() {
                 @Override
                 public void barcodeResult(BarcodeResult result) {
-                    Log.w(TAG, "onSuccess: " + result.getText());
-                    channel.invokeMethod("updateCode", result.getText());
-                    stopScanning();
+                    if (scanning) {
+                        Log.w(TAG, "onSuccess: " + result.getText());
+                        channel.invokeMethod("updateCode", result.getText());
+                        stopScanning();
+                    }
                 }
 
                 @Override

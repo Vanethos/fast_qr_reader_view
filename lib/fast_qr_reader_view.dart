@@ -88,14 +88,14 @@ CameraLensDirection _parseCameraLensDirection(String string) {
 ///
 /// May throw a [QRReaderException].
 Future<List<CameraDescription>> availableCameras() async {
-  print("availableCameras()");
+  debugPrint("availableCameras()");
   try {
-    print("inside try");
+    debugPrint("inside try");
     final List<dynamic> cameras =
         (defaultTargetPlatform == TargetPlatform.android)
             ? await _channelInit.invokeMethod('availableCameras')
             : await _channel.invokeMethod('availableCameras');
-    print("after await");
+    debugPrint("after await");
     return cameras.map((dynamic camera) {
       return new CameraDescription(
         name: camera['name'],
@@ -103,7 +103,7 @@ Future<List<CameraDescription>> availableCameras() async {
       );
     }).toList();
   } on PlatformException catch (e) {
-    print("Error");
+    debugPrint("Error");
     throw new QRReaderException(e.code, e.message);
   }
 }
@@ -113,14 +113,14 @@ Future<List<CameraDescription>> availableCameras() async {
 /// returns: [Future<PermissionStatus>] with the status from the check
 Future<PermissionStatus> checkCameraPermission() async {
   try {
-    print("checkCameraPermission()");
+    debugPrint("checkCameraPermission()");
     var permission = (defaultTargetPlatform == TargetPlatform.android)
         ? await _channelInit.invokeMethod('checkPermission') as String
         : await _channel.invokeMethod('checkPermission') as String;
-    print("Permission: $permission");
+    debugPrint("Permission: $permission");
     return _getPermissionStatus(permission);
   } on PlatformException catch (e) {
-    print("Error while permissions");
+    debugPrint("Error while permissions");
     return Future.value(PermissionStatus.unknown);
   }
 }
@@ -130,11 +130,11 @@ Future<PermissionStatus> checkCameraPermission() async {
 /// returns: [Future<PermissionStatus>] with the status from the request
 Future<PermissionStatus> requestCameraPermission() async {
   try {
-    print("invoking requestPermission");
+    debugPrint("invoking requestPermission");
     var result = (defaultTargetPlatform == TargetPlatform.android)
         ? await _channelInit.invokeMethod('requestPermission')
         : await _channel.invokeMethod('requestPermission');
-    print("result requestCameraPermission");
+    debugPrint("result requestCameraPermission");
     switch (result) {
       case "denied":
         return PermissionStatus.denied;
@@ -146,7 +146,7 @@ Future<PermissionStatus> requestCameraPermission() async {
         return PermissionStatus.unknown;
     }
   } on PlatformException catch (e) {
-    print("Error");
+    debugPrint("Error");
     return Future.value(PermissionStatus.unknown);
   }
 }
@@ -180,7 +180,7 @@ Future<void> openSettings() {
         ? _channelInit.invokeMethod('settings')
         : _channel.invokeMethod('settings');
   } on PlatformException catch (e) {
-    print("Error");
+    debugPrint("Error");
     return Future.error(e);
   }
 }
@@ -255,18 +255,18 @@ class QRReaderPreview extends StatefulWidget {
 class QRReaderPreviewState extends State<QRReaderPreview> {
   @override
   Widget build(BuildContext context) {
-    print("Building the view...?");
+    debugPrint("Building the view...?");
     if (defaultTargetPlatform == TargetPlatform.android) {
-      print("Creating Android View");
+      debugPrint("Creating Android View");
       return AndroidView(
         viewType: 'fast_qr_reader_view',
       );
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       if (widget.controller.value.isInitialized) {
-        print(
+        debugPrint(
             "[][][]This is initialized and the texture id is ${widget.controller._textureId}");
       } else {
-        print("[][][]NOTHING IS INITIALIZED!!!");
+        debugPrint("[][][]NOTHING IS INITIALIZED!!!");
       }
       return widget.controller.value.isInitialized
           ? new Texture(textureId: widget.controller._textureId)
@@ -385,7 +385,7 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
         ),
       );
     } on PlatformException catch (e) {
-      print("Error");
+      debugPrint("Error");
       throw new QRReaderException(e.code, e.message);
     }
     _eventSubscription =
@@ -400,7 +400,7 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
   ///
   /// A "cameraClosing" event is sent when the camera is closed automatically by the system (for example when the app go to background). The plugin will try to reopen the camera automatically but any ongoing recording will end.
   void _listener(dynamic event) {
-    print("_listener Event!!!!");
+    debugPrint("_listener Event!!!!");
     final Map<dynamic, dynamic> map = event;
     if (_isDisposed) {
       return;
@@ -420,7 +420,7 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
   ///
   /// Throws a [QRReaderException] if the capture fails.
   Future<Null> startScanning() async {
-    print("startScanning Event!!!!");
+    debugPrint("startScanning Event!!!!");
     if (!value.isInitialized || _isDisposed) {
       throw new QRReaderException(
         'Uninitialized QRReaderController',
@@ -434,40 +434,45 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
       );
     }
     try {
-      print("Inside start scanning");
+      debugPrint("Inside start scanning");
       value = value.copyWith(isScanning: true);
       await _channel.invokeMethod(
         'startScanning',
         <String, dynamic>{'textureId': _textureId},
       );
+      debugPrint("After the start scanning");
     } on PlatformException catch (e) {
-      print("Error");
+      debugPrint("Error");
       throw new QRReaderException(e.code, e.message);
     }
   }
 
   /// Stop scanning.
   Future<Null> stopScanning() async {
+    debugPrint("====== STOP SCANNING");
     if (!value.isInitialized || _isDisposed) {
+      debugPrint("==== VALUE IS NOT INITIALIZED");
       throw new QRReaderException(
         'Uninitialized QRReaderController',
         'stopScanning was called on uninitialized QRReaderController',
       );
     }
     if (!value.isScanning) {
+      debugPrint("==== WE ARE NOT SCANNING");
       throw new QRReaderException(
         'No scanning is happening',
         'stopScanning was called when the scanner was not scanning.',
       );
     }
     try {
+      debugPrint("==== Calling stop scanning");
       value = value.copyWith(isScanning: false);
       await _channel.invokeMethod(
         'stopScanning',
         <String, dynamic>{'textureId': _textureId},
       );
     } on PlatformException catch (e) {
-      print("Error");
+      debugPrint("Error");
       throw new QRReaderException(e.code, e.message);
     }
   }
@@ -496,13 +501,15 @@ class QRReaderController extends ValueNotifier<QRReaderValue> {
   Future<dynamic> _handleMethod(MethodCall call) async {
     switch (call.method) {
       case "updateCode":
+        print("Updating code");
         if (value.isScanning) {
+          print("Really Updating code");
           onCodeRead(call.arguments);
           value = value.copyWith(isScanning: false);
         }
         break;
-      case "print":
-        print(call.arguments);
+      case "debugPrint":
+        debugPrint(call.arguments);
         break;
     }
   }

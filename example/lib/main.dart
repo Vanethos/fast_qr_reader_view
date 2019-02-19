@@ -15,7 +15,7 @@ Future<Null> main() async {
 }
 
 void logError(String code, String message) =>
-    print('Error: $code\nError Message: $message');
+    debugPrint('Error: $code\nError Message: $message');
 
 class MyApp extends StatefulWidget {
   @override
